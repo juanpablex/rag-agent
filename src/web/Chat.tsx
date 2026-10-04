@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Turn } from "../core/agent";
-import { docById } from "../core/data";
+import { docById } from "../core/library";
 import { parseCitations, unverified, type Segment } from "../core/citations";
 
 export interface Msg {
@@ -23,7 +23,7 @@ function Cite({ s, onOpen }: { s: Extract<Segment, { kind: "cite" }>; onOpen: (d
   if (!s.known) return <span className="cite bad" title="This citation does not match any document, so it cannot be trusted">⚠ unknown source</span>;
   return (
     <button className={s.verified ? "cite" : "cite warn"} onClick={() => onOpen(s.docId, s.section)} title={s.verified ? "Open the cited passage" : "The agent did not retrieve this section in this turn: check it in the document"}>
-      {s.verified ? "" : "⚠ "}{doc!.title.replace(/:.*$/, "")} §{s.section}
+      {s.verified ? "" : "⚠ "}{doc ? doc.title.replace(/:.*$/, "") : s.docId} §{s.section}
     </button>
   );
 }
@@ -49,7 +49,7 @@ function Answer({ msg, onOpen }: { msg: Msg; onOpen: (docId: string, section: st
       ))}
       {bad > 0 && <p className="warn-note">{bad} citation{bad > 1 ? "s were" : " was"} not verified against what the agent actually retrieved. Check {bad > 1 ? "them" : "it"} in the document.</p>}
       {used.length > 0 && (
-        <p className="sources">Sources: {used.map((id) => <button key={id} className="src" onClick={() => onOpen(id, "")}>{docById(id)!.title}</button>)}</p>
+        <p className="sources">Sources: {used.map((id) => <button key={id} className="src" onClick={() => onOpen(id, "")}>{docById(id)?.title ?? id}</button>)}</p>
       )}
       {msg.turn && msg.turn.steps.length > 0 && (
         <details className="steps">

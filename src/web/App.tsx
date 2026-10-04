@@ -1,7 +1,8 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import Anthropic from "@anthropic-ai/sdk";
 import { runScripted, type Turn } from "../core/agent";
 import { DOCS } from "../core/data";
+import { allDocs, getVersion, subscribeLibrary } from "../core/library";
 import { explainError, runLlmTurn, type History } from "../core/llm";
 import { explainSampleError, getSample, runSampleTurn, type ChatTurn, type Tier } from "../core/sample";
 import { Chat, type Msg } from "./Chat";
@@ -25,6 +26,7 @@ export function App() {
   const history = useRef<History>([]);
   const turns = useRef<ChatTurn[]>([]);
   const seq = useRef(1);
+  useSyncExternalStore(subscribeLibrary, getVersion);
   const mode: "script" | "account" | "key" = account ? "account" : keyCfg ? "key" : "script";
 
   const [theme, setTheme] = useState<"light" | "dark">(() => (document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark"));
@@ -99,7 +101,7 @@ export function App() {
       </header>
       <nav className="tabs" role="tablist">
         <button role="tab" aria-selected={tab === "chat"} onClick={() => setTab("chat")}>Chat</button>
-        <button role="tab" aria-selected={tab === "library"} onClick={() => setTab("library")}>Library <span className="count">{DOCS.length}</span></button>
+        <button role="tab" aria-selected={tab === "library"} onClick={() => setTab("library")}>Library <span className="count">{allDocs().length}</span></button>
       </nav>
       <div className="body">
         {tab === "chat" ? <Chat msgs={msgs} busy={busy} onSend={send} onOpen={openDoc} mode={mode} /> : <Library open={open} onOpen={setOpen} />}

@@ -6,7 +6,9 @@ import { parseCitations, unverified } from "../src/core/citations";
 import { runScripted } from "../src/core/agent";
 import { runLlmTurn, type LlmClient } from "../src/core/llm";
 import { runSampleTurn, type SampleFn } from "../src/core/sample";
-import { CATEGORIES } from "../src/core/types";
+import { BUILT_IN_CATEGORIES } from "../src/core/types";
+import { addUserDoc, allDocs, clearUserDocs, docById } from "../src/core/library";
+import { LIMITS, pagesToDoc, textToDoc } from "../src/core/ingest";
 
 /** Data integrity, retrieval quality, citation checks and both model loops (with fakes: no key, no network). */
 function assert(cond: unknown, msg: string): asserts cond {
@@ -26,7 +28,7 @@ for (const d of DOCS) {
   assert(d.sections.every((s) => /^[0-9]+$/.test(s.id) && s.text.length > 0), `valid sections in ${d.id}`);
 }
 assert(DOCS.length >= 24, "there are at least 24 documents");
-assert(CATEGORIES.every((c) => DOCS.some((d) => d.category === c)), "every category has documents");
+assert(BUILT_IN_CATEGORIES.every((c) => DOCS.some((d) => d.category === c)), "every category has documents");
 
 // ---- retrieval: each question must find the expected section in the top 3
 const QUESTIONS: [string, string, string][] = [
@@ -129,6 +131,36 @@ const fakeLlm = (script: Anthropic.Message[]): LlmClient => ({ messages: { creat
   let code = "";
   try { await runSampleTurn("x", [], none, "quick"); } catch (e) { code = (e as { code: string }).code; }
   assert(code === "tools_unavailable", "account mode: a viewer without page tools gets a clear error");
+}
+
+// ---- documents added by the visitor
+{
+  const md = "# Pet policy\n\nDogs under 10 kg may visit the office on Fridays with prior approval.\n\n# Parking\n\nVisitor parking is limited to 2 hours; the zeppelin dock is closed on Mondays.\n";
+  const doc = textToDoc("Office guide", md, allDocs().map((d) => d.id));
+  assert(doc.category === "My documents" && doc.id === "my-office-guide" && doc.sections.length === 2, "headings become sections");
+  assert(doc.sections[0]!.title === "Pet policy" && doc.sections[1]!.id === "2", "section titles and ids are kept");
+  addUserDoc(doc);
+  assert(docById("my-office-guide") !== undefined && allDocs().length === DOCS.length + 1, "an added document joins the library");
+  const hit = search("zeppelin dock", { limit: 3 })[0];
+  assert(hit?.docId === "my-office-guide" && hit.sectionId === "2", "an added document is searchable right away");
+  assert(search("dogs office", { category: "My documents" }).every((h) => h.category === "My documents"), "the My documents filter works");
+  const segs = parseCitations("Closed on Mondays [doc:my-office-guide#2].", [{ docId: "my-office-guide", section: "2" }]);
+  assert(unverified(segs) === 0, "citations to an added document are verified");
+  const dup = textToDoc("Office guide", md, allDocs().map((d) => d.id));
+  assert(dup.id === "my-office-guide-2", "ids stay unique when the same title is added twice");
+  const flat = textToDoc("Notes", "word ".repeat(600), []);
+  assert(flat.sections.length >= 2 && flat.sections[0]!.title === "Part 1", "text without headings is split into parts");
+  let msg2 = "";
+  try { textToDoc("x", "short", []); } catch (e) { msg2 = (e as Error).message; }
+  assert(/too short/.test(msg2), "text that is too short is refused");
+  try { textToDoc("x", "a".repeat(LIMITS.maxChars + 1), []); msg2 = ""; } catch (e) { msg2 = (e as Error).message; }
+  assert(/too long/.test(msg2), "text that is too long is refused");
+  const pdf = pagesToDoc("Report", ["First page text with enough words to count as content for the search.", "", "Third page mentions the quarterly bonus pool."], []);
+  assert(pdf.sections.map((x) => x.id).join() === "1,3" && pdf.sections[1]!.title === "Page 3", "PDF pages keep their page numbers");
+  try { pagesToDoc("Scan", ["", " "], []); msg2 = ""; } catch (e) { msg2 = (e as Error).message; }
+  assert(/scan/i.test(msg2), "a PDF without text explains that scans are not supported");
+  clearUserDocs();
+  assert(allDocs().length === DOCS.length && search("zeppelin").length === 0, "removing the documents also removes them from search");
 }
 
 console.log(`OK: ${DOCS.length} documents, retrieval ${found}/${QUESTIONS.length}, citations checked, both model loops (fakes)`);

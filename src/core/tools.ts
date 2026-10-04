@@ -1,4 +1,4 @@
-import { DOCS, docById } from "./data";
+import { allDocs, docById } from "./library";
 import { search } from "./search";
 import { CATEGORIES, type Category } from "./types";
 
@@ -60,7 +60,7 @@ export const TOOLS: ToolSpec[] = [
     input_schema: { type: "object", properties: { category: CATEGORY_PROP }, required: [] },
     run: (a) => {
       const c = category(a.category);
-      const rows = DOCS.filter((d) => !c || d.category === c).map((d) => ({ id: d.id, title: d.title, category: d.category, date: d.date, version: d.version, owner: d.owner }));
+      const rows = allDocs().filter((d) => !c || d.category === c).map((d) => ({ id: d.id, title: d.title, category: d.category, date: d.date, version: d.version, owner: d.owner }));
       return { total: rows.length, rows };
     },
   },

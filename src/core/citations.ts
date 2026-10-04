@@ -1,4 +1,4 @@
-import { docById } from "./data";
+import { docById } from "./library";
 
 /** The model cites with markers like [doc:remote-work-policy#2]. The app turns them into chips and checks them. */
 export type Segment =

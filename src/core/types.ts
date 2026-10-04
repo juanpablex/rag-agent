@@ -1,6 +1,9 @@
-export type Category = "Contracts" | "Regulations" | "Salaries" | "Price lists" | "Catalogs" | "Policies" | "Reports";
+export type Category = "Contracts" | "Regulations" | "Salaries" | "Price lists" | "Catalogs" | "Policies" | "Reports" | "My documents";
 
-export const CATEGORIES: Category[] = ["Contracts", "Regulations", "Salaries", "Price lists", "Catalogs", "Policies", "Reports"];
+export const CATEGORIES: Category[] = ["Contracts", "Regulations", "Salaries", "Price lists", "Catalogs", "Policies", "Reports", "My documents"];
+
+/** Categories of the built-in (fictional) documents. */
+export const BUILT_IN_CATEGORIES = CATEGORIES.filter((c) => c !== "My documents");
 
 export interface Section {
   /** Short id used in citations, e.g. "3". */

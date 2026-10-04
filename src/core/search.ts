@@ -1,4 +1,4 @@
-import { DOCS } from "./data";
+import { allDocs, getVersion } from "./library";
 import type { Category, Doc, Section } from "./types";
 
 /** Small BM25 search over the sections of all documents. It runs in the browser, with no server or index file. */
@@ -40,23 +40,33 @@ interface Chunk {
   tf: Map<string, number>;
 }
 
-const chunks: Chunk[] = DOCS.flatMap((doc) =>
-  doc.sections.map((section) => {
-    // Titles weigh double: a question about "remote work" should find the remote work policy.
-    const tokens = [...tokenize(doc.title), ...tokenize(doc.title), ...tokenize(section.title), ...tokenize(section.title), ...tokenize(section.text.join(" "))];
-    const tf = new Map<string, number>();
-    tokens.forEach((t) => tf.set(t, (tf.get(t) ?? 0) + 1));
-    return { doc, section, tokens, tf };
-  }),
-);
-
+let chunks: Chunk[] = [];
 const df = new Map<string, number>();
-chunks.forEach((c) => c.tf.forEach((_, t) => df.set(t, (df.get(t) ?? 0) + 1)));
-const avgLen = chunks.reduce((a, c) => a + c.tokens.length, 0) / chunks.length;
+let avgLen = 1;
+let builtFor = -1;
+
+/** Rebuilds the index when documents were added or removed. */
+function ensureIndex() {
+  if (builtFor === getVersion()) return;
+  builtFor = getVersion();
+  chunks = allDocs().flatMap((doc) =>
+    doc.sections.map((section) => {
+      // Titles weigh double: a question about "remote work" should find the remote work policy.
+      const tokens = [...tokenize(doc.title), ...tokenize(doc.title), ...tokenize(section.title), ...tokenize(section.title), ...tokenize(section.text.join(" "))];
+      const tf = new Map<string, number>();
+      tokens.forEach((t) => tf.set(t, (tf.get(t) ?? 0) + 1));
+      return { doc, section, tokens, tf };
+    }),
+  );
+  df.clear();
+  chunks.forEach((c) => c.tf.forEach((_, t) => df.set(t, (df.get(t) ?? 0) + 1)));
+  avgLen = chunks.reduce((a2, c) => a2 + c.tokens.length, 0) / Math.max(chunks.length, 1);
+}
 
 const excerpt = (s: Section) => s.text.join(" ");
 
 export function search(query: string, opts: { category?: Category; limit?: number } = {}): Hit[] {
+  ensureIndex();
   const q = [...new Set(tokenize(query))];
   const k1 = 1.4;
   const b = 0.75;

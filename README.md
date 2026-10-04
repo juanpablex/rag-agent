@@ -12,6 +12,14 @@ All content is fictional: the company (Harborline Supply Co., a lighting distrib
 - **Library** of 25 documents in 7 categories: contracts, regulations, salaries, price lists, catalogs, policies and reports. Search, filter by category and read each document.
 - **Citation check.** The agent must cite with `[doc:ID#SECTION]`. The app verifies each citation against what the agent actually retrieved in that turn. A made-up document shows "unknown source", and a real section the agent never retrieved shows a warning.
 
+## Your own documents
+
+In the Library, **Add my document** lets you add text to the search: upload a `.txt` or `.md` file, a **PDF that contains text**, or paste text. The agent then answers about it and cites it like any other document (PDF pages become sections `Page N`; text with headings is split by heading).
+
+- It stays in your browser tab: nothing is uploaded to a server, and it is gone when you reload the page. In the real-model mode, the passages the agent finds are sent to Claude, like any question.
+- Limits: 5 MB per file, about 300,000 characters, 150 PDF pages, 5 added documents.
+- **No OCR.** Scanned PDFs (images) have no text to read and are refused with a clear message.
+
 ## What is real and what is not
 
 | Part | Status |
@@ -38,7 +46,7 @@ VITE_BASE=./ npm run build        # build for a claude.ai Artifact (relative pat
 
 ## Layout
 
-- `src/core/data`: the fictional documents. `search.ts`, `tools.ts`, `citations.ts`: retrieval, tools and the citation check.
+- `src/core/data`: the fictional documents. `library.ts`: built-in plus added documents. `search.ts`, `tools.ts`, `citations.ts`: retrieval, tools and the citation check. `ingest.ts`, `pdf.ts`: turning files and pasted text into documents.
 - `src/core/agent.ts` (scripted), `llm.ts` (API key), `sample.ts` (Claude account in an Artifact).
 - `src/web`: the interface.
 

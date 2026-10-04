@@ -113,3 +113,14 @@ form { display: flex; gap: 8px; }
 
 @media (max-width: 600px) { .msg { max-width: 100%; } }
 @media (prefers-reduced-motion: reduce) { .msg, .dialog, .sec.hl { animation: none; } button, input { transition: none; } }
+
+/* Add my document */
+.lib-top { display: flex; gap: 8px; flex: none; }
+.lib-top .lib-search { flex: 1; }
+.card-row { display: flex; gap: 6px; align-items: stretch; }
+.card-row .card { flex: 1; min-width: 0; }
+.rm { font-size: 0.75rem; padding: 4px 12px; align-self: center; color: var(--no); }
+.tabs.mini { padding-block: 0; }
+.drop { display: grid; gap: 6px; border: 1px dashed var(--line); border-radius: 14px; padding: 14px; background: var(--bg-soft); }
+.drop input[type="file"] { border-radius: 12px; padding: 6px; font-size: 0.8rem; }
+.dialog textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--ink); font: inherit; resize: vertical; }
