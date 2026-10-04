@@ -1,5 +1,9 @@
 # Docs Agent
 
+[![Deploy](https://github.com/juanpablex/rag-agent/actions/workflows/pages.yml/badge.svg)](https://github.com/juanpablex/rag-agent/actions/workflows/pages.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Live demo](https://img.shields.io/badge/demo-live-5eead4)](https://juanpablex.github.io/rag-agent/)
+
+![Preview of the app](docs/preview.jpg)
+
 An AI agent that answers questions about company documents and **cites the exact passage** behind each answer. Click a citation and the document opens at that passage, highlighted.
 
 **Try it:** https://juanpablex.github.io/rag-agent/
